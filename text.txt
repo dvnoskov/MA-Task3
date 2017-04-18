@@ -1,0 +1,53 @@
+1
+1
+Добро пожаловать в ресторан рога и копыта
+Выбор меню обеда
+Выбор языка интерфейса
+Русский
+Английский
+Выбирите язык интерфейса
+Меню №1 (борщь,каша,компот) = 26 грн.
+Меню №2 (суп,каша,чай) = 22 грн.
+Меню №3 (Молочная каша,кофе) = 18 грн.
+Вернутся в ресторан
+Выбор номера меню
+Callback
+Ресторан работает 24 часа/365 дней
+Заказать
+Укажите свой номер телефона в формате 0ххххххххх(10 цифр)
+Для потверджения Вашего заказа выбирите YES and NO
+Укажите место доставки в формате Cherkassy str. ...rom....
+Укажите  дату доставки в формате хх-хх-хххх(12-05-2017)
+Укажите  время доставки с(11-00 до 15-00) в формате хх-хх(12-05)
+Ваш заказ принят
+Для в сохранения заказа в Google-Calendar нажмите Calendar
+Ваш заказ отменен
+Укажите свой Email в формате ххх @gmail.com
+Введите повторно информацию без ошибок
+
+
+
+Welcome to the restaurant of horns and hooves
+Choosing a lunch menu
+Selecting the interface language
+Russian
+English
+Choose the interface language
+Menu number 1 (borsch, porridge, compote) = 26 UAH.
+Menu number 2 (soup, porridge, tea) = 22 UAH.
+Menu number 3 (Milk porridge, coffee) = 18 UAH.
+Back in the restaurant
+Selecting a menu number
+Callback
+The restaurant is open 24 hours / 365 days
+To order
+Enter your phone number in the format 0xxxxxxxxxx (10 digits)
+To confirm your order, select YES and NO
+Enter the place of delivery in the format Cherkassy str. ... rom ....
+Please enter the date of delivery in the format xx-xx-xxxx (12-05-2017)
+Specify the delivery time from (11-00 to 15-00) in the format xx-xx (12-05)
+Your order is accepted
+To save the order in Google Calendar, click Calendar
+Your order is canceled
+Enter your Email in the format xxx @ gmail.com
+Please re-enter the information without errors
