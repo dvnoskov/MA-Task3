@@ -215,15 +215,11 @@ def echoall(message):
         query = session.query(User)
         last = query.filter(bool(User.user_id)).count()
         tok = query.filter(User.user_id == last).one()
-     #   add_d = message.chat.first_name #test
-     #   temp = {Buy.temp: add_d}       #
-     #   update_buy(temp)
-     #   oauth2()                      #test
         if None == tok.token: #  cr token
             add_d = message.chat.first_name
             temp = {Buy.temp: add_d}
             update_buy(temp)
-            oauth2()
+            oauth2(message)
         else:
             send_welcome(message)
             pass
@@ -301,34 +297,41 @@ def lang(a,message):
     send_welcome(message)
     pass
 
+
+
 # tokin google
+
 scope = 'https://www.googleapis.com/auth/drive https://www.googleapis.com/auth/calendar'
 flow = oauth2client.client.flow_from_clientsecrets('client_secret.json',
                                                        scope=scope,
                                                        redirect_uri='http://127.0.0.1:5000/oauth2callback')
 flow.params['access_type'] = 'offline'
 
-
-
-@server.route('/start')
-def  oauth2():
+def  oauth2(message):
     auth_url = flow.step1_get_authorize_url()
-    return redirect(auth_url)
+    keyboard = telebot.types.InlineKeyboardMarkup(row_width=1)
+    url_button = telebot.types.InlineKeyboardButton(text=text(28),url=auth_url)
+    keyboard.add(url_button)
+    bot.send_message(message.chat.id, text(27), reply_markup=keyboard)
+
+
 
 @server.route('/oauth2callback', methods=['GET'])
 def get_credentials():
-    credentials = flow.step2_exchange(request.args.get('code'))
-    json_credentials = Credentials.to_json(credentials)
-    query = session.query(Buy)
-    last = query.filter(bool(Buy.buy_id)).count()
-    add = query.filter(Buy.buy_id == last).one()
-    user = add.temp
-    query = session.query(User)
-    query = query.filter(User.username == user)
-    query.update({User.token: json_credentials})
-    session.commit()
-    send_welcome()
-    return "Ok", 200
+ #   try:
+        credentials = flow.step2_exchange(request.args.get('code'))
+        json_credentials = Credentials.to_json(credentials)
+        query = session.query(Buy)
+        last = query.filter(bool(Buy.buy_id)).count()
+        add = query.filter(Buy.buy_id == last).one()
+        user = add.temp
+        query = session.query(User)
+        query = query.filter(User.username == user)
+        query.update({User.token: json_credentials})
+        session.commit()
+        return "Ok", 200
+
+
 
 
 
@@ -342,7 +345,7 @@ def get_message():
 @server.route("/")
 def web_hook():
     bot.remove_webhook()
-    bot.set_webhook(url='https://8938cd52.ngrok.io/' + config.token) #ngrok adress
+    bot.set_webhook(url='https://cc33c4a5.ngrok.io/' + config.token) #ngrok adress
     return "CONNECTED", 200
 
 port = int(os.environ.get("PORT", 5000))
