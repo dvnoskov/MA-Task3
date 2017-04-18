@@ -24,8 +24,8 @@ Callback
 Ваш заказ отменен
 Укажите свой Email в формате ххх @gmail.com
 Введите повторно информацию без ошибок
-
-
+Для подтверждения рассылкив календарь и гугл драйв пройдите аутификацию на гугле
+Потвердить
 
 Welcome to the restaurant of horns and hooves
 Choosing a lunch menu
@@ -35,7 +35,7 @@ English
 Choose the interface language
 Menu number 1 (borsch, porridge, compote) = 26 UAH.
 Menu number 2 (soup, porridge, tea) = 22 UAH.
-Menu number 3 (Milk porridge, coffee) = 18 UAH.
+Menu №3 (Milk porridge, coffee) = 18 UAH.
 Back in the restaurant
 Selecting a menu number
 Callback
@@ -51,3 +51,5 @@ To save the order in Google Calendar, click Calendar
 Your order is canceled
 Enter your Email in the format xxx @ gmail.com
 Please re-enter the information without errors
+To confirm the distribution to the calendar and google go to Google authentication
+Confirm
