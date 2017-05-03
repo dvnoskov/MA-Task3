@@ -12,6 +12,7 @@ import logging
 import config
 from flask import Flask, request,redirect
 import telebot
+import requests
 import os
 from googleapiclient.discovery import build
 import json
@@ -355,9 +356,32 @@ def  oauth2(message):
 
 
 
+
+def get_url(url):
+    response = requests.get(url)
+    content = response.content.decode("utf8")
+    return content
+
+
+def message(chat_id,text):
+    TOKEN = config.token
+    URL = "https://api.telegram.org/bot{}/".format(TOKEN)
+    url = URL + "sendMessage?text={}&chat_id={}".format(text,chat_id)
+    return  get_url(url)
+
+
 @server.route('/oauth2callback', methods=['GET'])
 def get_credentials():
     if 'code' not in request.args:
+        query = session.query(Buy)
+        last = query.filter(bool(Buy.buy_id)).count()
+        add = query.filter(Buy.buy_id == last).one()
+        user = add.temp
+        query = session.query(User)
+        query = query.filter(User.username == user).one()
+        chat_id = query.chat_id
+        text = 'No successful authorization,to end the procedure, enter Calendar'
+        message(chat_id, text)
         response = "Didn't get the auth code"
     else:
         credentials = flow.step2_exchange(request.args.get('code'))
@@ -370,6 +394,10 @@ def get_credentials():
         query = query.filter(User.username == user)
         query.update({User.token: json_credentials})
         session.commit()
+        query = query.filter(User.username == user).one()
+        chat_id = query.chat_id
+        text = 'Successful authorization,to end the procedure, enter Calendar'
+        message(chat_id,text)
         response = "Successful authorization, to end the procedure, enter Calendar"
     return response,200
 
