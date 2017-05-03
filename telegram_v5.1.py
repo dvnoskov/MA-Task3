@@ -2,7 +2,7 @@
 from oauth2client.client import flow_from_clientsecrets, Credentials
 import oauth2client
 import re
-from sqlalchemy import null
+import httplib2
 from telebot import types
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
@@ -13,12 +13,14 @@ import config
 from flask import Flask, request,redirect
 import telebot
 import os
-
+from googleapiclient.discovery import build
+import json
 
 
 server = Flask(__name__)
 
-engine = create_engine('sqlite:///SQLAlchemy_telegram_v4.5.1.db')
+
+engine = create_engine('sqlite:///SQLAlchemy_telegram_v5.db')
 
 Base = declarative_base()
 
@@ -29,8 +31,8 @@ session = DBSession()
 bot = telebot.TeleBot(config.token)
 
 
-#logger = telebot.logger
-#telebot.logger.setLevel(logging.DEBUG)
+logger = telebot.logger
+telebot.logger.setLevel(logging.DEBUG)
 
 
 @bot.message_handler(commands=['start'])
@@ -39,6 +41,8 @@ def send_welcome(message):
     markup.row(text(3))
     markup.row(text(4), text(5))
     bot.send_message(message.chat.id,'start',reply_markup=markup)
+  #  message.test_id=335871910   # test chat.id
+   # bot.send_message(message.test_id, 'start', reply_markup=markup) # test
     pass
 
 # message menu
@@ -117,7 +121,7 @@ def menu_start_buy(message, start_text):
     keyboard.add(callback_button)
     bot.send_message(message.chat.id, start_text, reply_markup=keyboard)
     if 0 == session.query(User).filter(User.username == message.chat.first_name).count():
-        add9 = User(username=message.chat.first_name)
+        add9 = User(username=message.chat.first_name,chat_id=message.chat.id )
         session.add(add9)
         session.commit()
     pass
@@ -212,17 +216,8 @@ def echoall(message):
         query = query.filter(User.username == message.chat.first_name)
         query.update({User.email_address: add3})
         session.commit()
-        query = session.query(User)
-        last = query.filter(bool(User.user_id)).count()
-        tok = query.filter(User.user_id == last).one()
-        if None == tok.token: #  cr token
-            add_d = message.chat.first_name
-            temp = {Buy.temp: add_d}
-            update_buy(temp)
-            oauth2(message)
-        else:
-            send_welcome(message)
-            pass
+        oauth2(message)
+        pass
     elif bool('Cherkassy') == bool(re.match(r'Cherkassy', message.text)):
         bot.send_message(message.chat.id, text=text(20))
         add_d = message.text
@@ -269,8 +264,24 @@ def echoall(message):
     elif message.text == 'Calendar':
         true={Buy.calendar: True}
         update_buy(true)
-        bot.send_message(message.chat.id, text=text(25))
+        query = session.query(User)
+        last = query.filter(bool(User.user_id)).count()
+        tok = query.filter(User.user_id == last).one()
+        if None == tok.token:  # cr token
+            add_d = message.chat.first_name
+            temp = {Buy.temp: add_d}
+            update_buy(temp)
+            bot.send_message(message.chat.id, text=text(25))
+            pass
+        else:
+            add_d = message.chat.first_name
+            temp = {Buy.temp: add_d}
+            update_buy(temp)
+            calendar()
+            send_welcome(message)
+            pass
         pass
+
     elif message.text != ('Calendar' and 'No-buy' and 'No' and 'Yes-buy'\
                                   and (bool(re.findall(r'(11|12|13|14)-\d{2}', message.text)))\
                                   and (bool(re.findall(r'\d{2}-\d{2}-(2017)', message.text))) \
@@ -297,6 +308,32 @@ def lang(a,message):
     send_welcome(message)
     pass
 
+def calendar():
+    query = session.query(Buy)
+    last = query.filter(bool(Buy.buy_id)).count()
+    even_cal = query.filter(Buy.buy_id == last).one()
+    new = even_cal.data_time_city
+    query = session.query(User)
+    add_tok = query.filter(User.username == even_cal.temp).one()
+    credentials = Credentials.new_from_json(add_tok.token)
+    http = credentials.authorize(httplib2.Http())
+    service = build('calendar', 'v3', http=http)
+    event = {
+        'summary': text(3),
+        'location': even_cal.adress_city,
+        'description': even_cal.menu,
+        'start': {
+            'dateTime': new,
+            'timeZone': 'Europe/Kiev',
+        },
+        'end': {
+            'dateTime': new,
+            'timeZone': 'Europe/Kiev',
+        },
+
+    }
+    event = service.events().insert(calendarId='primary', body=event).execute()
+    return json.dumps(event)
 
 
 # tokin google
@@ -306,6 +343,8 @@ flow = oauth2client.client.flow_from_clientsecrets('client_secret.json',
                                                        scope=scope,
                                                        redirect_uri='http://127.0.0.1:5000/oauth2callback')
 flow.params['access_type'] = 'offline'
+flow.params['prompt'] = 'consent'
+
 
 def  oauth2(message):
     auth_url = flow.step1_get_authorize_url()
@@ -318,7 +357,9 @@ def  oauth2(message):
 
 @server.route('/oauth2callback', methods=['GET'])
 def get_credentials():
- #   try:
+    if 'code' not in request.args:
+        response = "Didn't get the auth code"
+    else:
         credentials = flow.step2_exchange(request.args.get('code'))
         json_credentials = Credentials.to_json(credentials)
         query = session.query(Buy)
@@ -329,10 +370,8 @@ def get_credentials():
         query = query.filter(User.username == user)
         query.update({User.token: json_credentials})
         session.commit()
-        return "Ok", 200
-
-
-
+        response = "Successful authorization, to end the procedure, enter Calendar"
+    return response,200
 
 
 # route webhook
@@ -345,7 +384,7 @@ def get_message():
 @server.route("/")
 def web_hook():
     bot.remove_webhook()
-    bot.set_webhook(url='https://cc33c4a5.ngrok.io/' + config.token) #ngrok adress
+    bot.set_webhook(url='https://58fb7898.ngrok.io/' + config.token) #ngrok adress
     return "CONNECTED", 200
 
 port = int(os.environ.get("PORT", 5000))
