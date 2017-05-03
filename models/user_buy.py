@@ -56,16 +56,17 @@ class User(Base):
     token = Column(JSONType)
     created_on = Column(DateTime(timezone=True), default=datetime.utcnow)
     updated_on = Column(DateTime(timezone=True), default=datetime.now, onupdate=datetime.utcnow)
+    chat_id =Column(String(10))
 
 
-
-def __init__(self, user_id, username, email_address, token,created_on, updated_on):
+def __init__(self, user_id, username, email_address, token,created_on, updated_on,chat_id):
     self.user_id = user_id
     self.username = username
     self.email_address = email_address
     self.token = token
     self.created_on = created_on
     self.updated_on = updated_on
+    self.chat_id=chat_id
 
 
 def __repr__(self):
