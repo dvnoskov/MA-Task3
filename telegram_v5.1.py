@@ -347,14 +347,12 @@ flow.params['access_type'] = 'offline'
 flow.params['prompt'] = 'consent'
 
 
-def  oauth2(message):
+def oauth2(message):
     auth_url = flow.step1_get_authorize_url()
     keyboard = telebot.types.InlineKeyboardMarkup(row_width=1)
-    url_button = telebot.types.InlineKeyboardButton(text=text(28),url=auth_url)
+    url_button = telebot.types.InlineKeyboardButton(text=text(28), url=auth_url)
     keyboard.add(url_button)
     bot.send_message(message.chat.id, text(27), reply_markup=keyboard)
-
-
 
 
 def get_url(url):
@@ -363,11 +361,11 @@ def get_url(url):
     return content
 
 
-def message(chat_id,text):
+def message(chat_id, text):
     TOKEN = config.token
     URL = "https://api.telegram.org/bot{}/".format(TOKEN)
-    url = URL + "sendMessage?text={}&chat_id={}".format(text,chat_id)
-    return  get_url(url)
+    url = URL + "sendMessage?text={}&chat_id={}".format(text, chat_id)
+    return get_url(url)
 
 
 @server.route('/oauth2callback', methods=['GET'])
@@ -380,9 +378,11 @@ def get_credentials():
         query = session.query(User)
         query = query.filter(User.username == user).one()
         chat_id = query.chat_id
-        text = 'No successful authorization,to end the procedure, enter Calendar'
+        text = 'No successful authorization'
         message(chat_id, text)
-        response = "Didn't get the auth code"
+        text = 'To continue, /start'
+        message(chat_id, text)
+        response = "No successful authorization"
     else:
         credentials = flow.step2_exchange(request.args.get('code'))
         json_credentials = Credentials.to_json(credentials)
@@ -396,10 +396,14 @@ def get_credentials():
         session.commit()
         query = query.filter(User.username == user).one()
         chat_id = query.chat_id
-        text = 'Successful authorization,to end the procedure, enter Calendar'
-        message(chat_id,text)
-        response = "Successful authorization, to end the procedure, enter Calendar"
-    return response,200
+        text = 'Successful authorization'
+        message(chat_id, text)
+        text = 'To continue, /start'
+        message(chat_id, text)
+        calendar()
+        response = "Successful authorization"
+    return response, 200
+
 
 
 # route webhook
