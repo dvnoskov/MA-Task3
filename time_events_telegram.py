@@ -17,9 +17,6 @@ Base = declarative_base()
 DBSession = sessionmaker(bind=engine)
 session = DBSession()
 
-query = session.query(Buy)
-count = query.filter(bool(Buy.buy_id)).count()
-
 
 def get_url(url):
     response = requests.get(url)
@@ -38,6 +35,8 @@ def message(i):
 
 
 def redir_telegram():
+    query = session.query(Buy)
+    count = query.filter(bool(Buy.buy_id)).count()
     i = 1
     while i <= count:
         query = session.query(Buy)
@@ -59,7 +58,7 @@ def redir_telegram():
         else:     #     ('No data')
             i += 1
             pass
-        i += 1
+    i += 1
 
 pass
 
