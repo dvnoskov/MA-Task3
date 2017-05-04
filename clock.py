@@ -7,12 +7,15 @@ import time
 import requests
 import config
 
+from apscheduler.schedulers.blocking import BlockingScheduler
+sched = BlockingScheduler()
+
+
 
 TOKEN = config.token
 URL = "https://api.telegram.org/bot{}/".format(TOKEN)
 
-engine = create_engine('postgres://ombhyhxabjtrft:4d2d8776a6550707842bce666a4ad2d4ee41d51a41808cd76e0e78c9195ca5ae@ec2-107-22-236-252.compute-1.amazonaws.com:5432/d28f0dtjpqdr46')
-#Base = declarative_base()
+engine = create_engine('postgres://biuhgrjrrwwfjg:505787efd3ac0a86bef37d9b63d1b1fc77a335d89dace74486f5dac688d45b1d@ec2-23-21-220-188.compute-1.amazonaws.com:5432/d5r5fmsr87lqpb')
 Base = declarative_base()
 DBSession = sessionmaker(bind=engine)
 session = DBSession()
@@ -45,14 +48,14 @@ def redir_telegram():
         add_t = add.data_time_city.split('T')  # work
         time = add_t[1].split(':')
         oclok = time[0]
-        current_date = '2017-04-27T11:00:00'  # test
-        #  current_date=datetime.today().isoformat() #work
+       # current_date = '2017-05-22T11:00:00'  # test
+        current_date=datetime.today().isoformat() #work
         curr = current_date.split('T')
         time = curr[1].split(':')
         curr_oclok = time[0]
 
         if add_t[0] == curr[0]:
-            if int(int(oclok) - 1) == int(curr_oclok): # ('-1 hours') #work
+            if int(int(oclok) - 4) == int(curr_oclok): # ('-1 hours') #work
                 message(i)
                 i += 1
         else:     #     ('No data')
@@ -63,8 +66,9 @@ def redir_telegram():
 pass
 
 
-#while True:
- #   redir_telegram()
- #   time.sleep(3600) #sleep 10 -3600 cek
+@sched.scheduled_job('interval', minutes=60)
+def timed_job():
+    redir_telegram()
+    pass
 
-redir_telegram()
+sched.start()
