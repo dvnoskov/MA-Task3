@@ -1,8 +1,9 @@
-#coding:utf-8
+#pip install --upgrade google-api-python-client
+# -*- coding: UTF-8 -*-
 from oauth2client.client import flow_from_clientsecrets, Credentials
 import oauth2client
 import re
-import httplib2
+import telebot
 from telebot import types
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
@@ -10,30 +11,26 @@ from sqlalchemy.ext.declarative import declarative_base
 from models.user_buy import User,Buy
 import logging
 import config
-from flask import Flask, request,redirect
-import telebot
 import requests
+from flask import Flask, request,redirect
 import os
+from googleapiclient.http import MediaFileUpload
+import httplib2
 from googleapiclient.discovery import build
 import json
 
 
 server = Flask(__name__)
 
-
 engine = create_engine('sqlite:///SQLAlchemy_telegram_v5.db')
-
 Base = declarative_base()
-
 DBSession = sessionmaker(bind=engine)
 session = DBSession()
 
-
 bot = telebot.TeleBot(config.token)
 
-
-logger = telebot.logger
-telebot.logger.setLevel(logging.DEBUG)
+#logger = telebot.logger
+#telebot.logger.setLevel(logging.DEBUG)
 
 
 @bot.message_handler(commands=['start'])
@@ -42,8 +39,6 @@ def send_welcome(message):
     markup.row(text(3))
     markup.row(text(4), text(5))
     bot.send_message(message.chat.id,'start',reply_markup=markup)
-  #  message.test_id=335871910   # test chat.id
-   # bot.send_message(message.test_id, 'start', reply_markup=markup) # test
     pass
 
 # message menu
@@ -127,6 +122,8 @@ def menu_start_buy(message, start_text):
         session.commit()
     pass
 
+
+
 # call_back message
 @bot.callback_query_handler(func=lambda call: True)
 def callback_inline(call):
@@ -137,54 +134,43 @@ def callback_inline(call):
         elif call.data == text(10):
             menu_start_buy(call.message,text(10))
             pass
+
         elif call.data == text(11):
             menu_start_buy(call.message,text(11))
             pass
+
         elif call.data == 'Rus':
             a = '1'
             lang(a,call.message)
             pass
+
         elif call.data == 'England':
             a = '0'
             lang(a, call.message)
             pass
+
         elif call.data =='Callback':
             send_welcome(call.message)
             pass
+
         elif call.data =='buy_start':
             add2 = call.message.text
             menu = session.query(User).filter(User.username == call.message.chat.first_name).first()
             session.add(Buy(id_user=menu.user_id, menu=add2))
             session.commit()
             bot.send_message(call.message.chat.id, text=text(17))
-            if add2 == text(11): # error
-                tot = 18
-                total={Buy.total: tot}
-                update_buy(total)
-                pass
-
-            elif add2 == text(10):
-                tot = 22
-                total = {Buy.total: tot}
-                update_buy(total)
-                pass
-
-            elif add2 == text(9):
-                tot = 26
-                total = {Buy.total: tot}
-                update_buy(total)
-                pass
-
+            pass
         pass
 
     pass
+
+
 
 
 # message text
 def text(i):
    f = open('text.txt', encoding='utf8')
    line = f.readlines()
- #  i=0
    if line[0] == line[1]:
        i=i-1
        pass
@@ -200,11 +186,117 @@ def handle_message_finish(message):
     bot.send_message(message.chat.id, text =text(18),reply_markup=markup)
     pass
 
+
+#drive
+
+def create(id_user, drive_service):
+    stat_list = []
+    text = ''
+    for order in session.query(Buy):
+        if order.id_user == id_user:
+            stat_list.append(' Menu:{} | Address:{}  |  Price:{}  |  Date:{} \n\n'.format(
+                 order.menu, order.adress_city, order.total, order.data_time_city))
+            # temp change to username
+            text = ''.join(stat_list)
+
+    for user in session.query(User):
+        if user.user_id == id_user:
+             return drive_search_file(text, drive_service, user.chat_id)
+
+
+
+def drive_search_file(text, drive_service, chat_id):
+    filename = 'LunchBot{}.txt'.format(str(chat_id))
+    page_token = None
+    while True:
+        response = drive_service.files().list(q="mimeType='text/plain' and trashed=False",
+                                              spaces='drive',
+                                              fields='nextPageToken, files(id, name)',
+                                              pageToken=page_token).execute()
+        page_token = response.get('nextPageToken', None)
+        if not page_token:
+            break
+
+    for file in response.get('files', []):
+        if file.get('name') == filename:
+            drive_update(text, file.get('id'), drive_service)
+            break
+    else:
+        drive_create(text, filename, drive_service)
+
+
+
+def drive_update(text, file_id, drive_service):
+    upload_file = 'temp.txt'
+    with open(upload_file, 'w+') as f:
+        f.write(text)
+
+    # File's new content.
+    media = MediaFileUpload(upload_file, mimetype='text/plain')
+
+    # Send the request to the API.
+    drive_service.files().update(fileId=file_id, media_body=media).execute()
+
+
+def drive_create(text, filename, drive_service):
+    upload_file = 'temp.txt'
+    with open(upload_file, 'w+') as f:
+        f.write(text)
+    file_metadata = {'name': filename}
+    media = MediaFileUpload(upload_file,
+                            mimetype='text/plain')
+    drive_service.files().create(body=file_metadata,
+                                 media_body=media,
+                                 fields='id').execute()
+
+def drive():
+    query = session.query(Buy)
+    last = query.filter(bool(Buy.buy_id)).count()
+    even_cal = query.filter(Buy.buy_id == last).one()
+    new = even_cal.id_user
+    query = session.query(User)
+    add_tok = query.filter(User.user_id == even_cal.id_user).one()
+    credentials = Credentials.new_from_json(add_tok.token)
+    http = credentials.authorize(httplib2.Http())
+    service = build('drive', 'v3', http=http)
+    create(new, service)
+    pass
+
+
+# calendar
+def calendar():
+    query = session.query(Buy)
+    last = query.filter(bool(Buy.buy_id)).count()
+    even_cal = query.filter(Buy.buy_id == last).one()
+    new = even_cal.data_time_city
+    query = session.query(User)
+    add_tok = query.filter(User.username == even_cal.temp).one()
+    credentials = Credentials.new_from_json(add_tok.token)
+    http = credentials.authorize(httplib2.Http())
+    service = build('calendar', 'v3', http=http)
+    event = {
+        'summary': text(3),
+        'location': even_cal.adress_city,
+        'description': even_cal.menu,
+        'start': {
+            'dateTime': new,
+            'timeZone': 'Europe/Kiev',
+        },
+        'end': {
+            'dateTime': new,
+            'timeZone': 'Europe/Kiev',
+        },
+
+    }
+    event = service.events().insert(calendarId='primary', body=event).execute()
+    return json.dumps(event)
+
+
+
 # message
 @bot.message_handler(func=lambda message: message.text == message.text
                                          and message.content_type =='text')
 def echoall(message):
-
     if bool('0') == bool(re.match(r'[0]{1}[0-9]{9}', message.text) and len(message.text) == 10):
         bot.send_message(message.chat.id, text=text(19))
         add4 = message.text
@@ -248,6 +340,13 @@ def echoall(message):
         markup = types.ReplyKeyboardMarkup(one_time_keyboard=True, resize_keyboard=True)
         markup.row('Calendar', 'No')
         bot.send_message(message.chat.id, text=text(23),reply_markup=markup)
+        query = session.query(User)
+        last = query.filter(bool(User.user_id)).count()
+        tok = query.filter(User.user_id == last).one()
+        if None == tok.token:
+            pass
+        else:
+            drive()
         pass
     elif message.text == 'No':
         send_welcome(message)
@@ -278,12 +377,12 @@ def echoall(message):
             add_d = message.chat.first_name
             temp = {Buy.temp: add_d}
             update_buy(temp)
-            calendar()
+            calendar()   #
             send_welcome(message)
             pass
         pass
 
-    elif message.text != ('Calendar' and 'No-buy' and 'No' and 'Yes-buy'\
+    elif message.text != ('Calendar' and 'No-buy' and 'No' and 'Yes-buy' \
                                   and (bool(re.findall(r'(11|12|13|14)-\d{2}', message.text)))\
                                   and (bool(re.findall(r'\d{2}-\d{2}-(2017)', message.text))) \
                                   and (bool(re.match(r'Cherkassy', message.text))) \
@@ -309,36 +408,8 @@ def lang(a,message):
     send_welcome(message)
     pass
 
-def calendar():
-    query = session.query(Buy)
-    last = query.filter(bool(Buy.buy_id)).count()
-    even_cal = query.filter(Buy.buy_id == last).one()
-    new = even_cal.data_time_city
-    query = session.query(User)
-    add_tok = query.filter(User.username == even_cal.temp).one()
-    credentials = Credentials.new_from_json(add_tok.token)
-    http = credentials.authorize(httplib2.Http())
-    service = build('calendar', 'v3', http=http)
-    event = {
-        'summary': text(3),
-        'location': even_cal.adress_city,
-        'description': even_cal.menu,
-        'start': {
-            'dateTime': new,
-            'timeZone': 'Europe/Kiev',
-        },
-        'end': {
-            'dateTime': new,
-            'timeZone': 'Europe/Kiev',
-        },
-
-    }
-    event = service.events().insert(calendarId='primary', body=event).execute()
-    return json.dumps(event)
-
-
+	
 # tokin google
-
 scope = 'https://www.googleapis.com/auth/drive https://www.googleapis.com/auth/calendar'
 flow = oauth2client.client.flow_from_clientsecrets('client_secret.json',
                                                        scope=scope,
@@ -398,17 +469,15 @@ def get_credentials():
         chat_id = query.chat_id
         text = 'Successful authorization'
         message(chat_id, text)
-        text = 'To continue, /start'
+        text = 'To continue, enter /start'
         message(chat_id, text)
         calendar()
         response = "Successful authorization"
     return response, 200
 
 
-
 # route webhook
 @server.route('/' + config.token, methods=['POST'])
-#@server.route('/bot' + config.token, methods=['POST'])
 def get_message():
     bot.process_new_updates([telebot.types.Update.de_json(request.stream.read().decode("utf-8"))])
     return "POST", 200
@@ -416,17 +485,10 @@ def get_message():
 @server.route("/")
 def web_hook():
     bot.remove_webhook()
-    bot.set_webhook(url='https://58fb7898.ngrok.io/' + config.token) #ngrok adress
+    bot.set_webhook(url='https://c87b7744.ngrok.io/' + config.token) #ngrok adress
     return "CONNECTED", 200
 
-port = int(os.environ.get("PORT", 5000))
-#port = int(os.environ.get("PORT", 8443))
+
 if __name__ == "__main__":
-     #server.run()
-     server.run(host='127.0.0.1', port=port)
-
-
-#server.run(host="0.0.0.0", port=os.environ.get('PORT', 5000))
-#WEBHOOK_PORT = 8443  # 443, 80, 88 or 8443 (port need to be 'open')
-
+     server.run(host="0.0.0.0", port=os.environ.get('PORT', 5000))
 
