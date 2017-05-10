@@ -15,7 +15,11 @@ Additional features:
 -The reminder about the ordered complete lunch was carried out by the notification method one hour before the time of the order.
 
 
-(програмний продукт - позволяет выполнять интерактивный заказ комплексного обеда в ресторане, 
+An example of a working bot  deploy on Heroku, in Telegram the name of the bot is @ test_dimon49bot
+
+
+
+(Програмний продукт - позволяет выполнять интерактивный заказ комплексного обеда в ресторане, 
 методом ответа на предложенные сообщения )
 
 Основной мессенжер для заказа комплекного меню - является Telegram 
@@ -26,3 +30,5 @@ Additional features:
           Google Calendar(заноситься напоминание про заказанный обед) 
           Google Drive(информация про заказанные обеды).
 -Напоминание про заказаный комплекный обед выполнено методом уведомления за один час до времени заказа.
+
+Пример рабочего бота залито на Heroku, в Телеграме имя бота - @test_dimon49bot

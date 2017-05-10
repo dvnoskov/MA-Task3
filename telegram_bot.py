@@ -22,7 +22,7 @@ import json
 
 server = Flask(__name__)
 
-engine = create_engine('sqlite:///SQLAlchemy_telegram_v5.db')
+engine = create_engine('sqlite:///SQLAlchemy_telegram_v5.db') #example
 Base = declarative_base()
 DBSession = sessionmaker(bind=engine)
 session = DBSession()
@@ -47,12 +47,10 @@ def handle_message(message):
     menu(message)
     pass
 
-
 @bot.message_handler(regexp='Choosing a lunch menu')
 def handle_message(message):
     menu(message)
     pass
-
 
 def menu(message):
     keyboard = types.InlineKeyboardMarkup(row_width=1)
@@ -73,12 +71,10 @@ def handle_message(message):
     languange(message)
     pass
 
-
 @bot.message_handler(regexp='Selecting the interface language')
 def handle_message(message):
     languange(message)
     pass
-
 
 def languange(message):
     keyboard = types.InlineKeyboardMarkup(row_width=2)
@@ -95,12 +91,10 @@ def handle_message(message):
     restoran(message)
     pass
 
-
 @bot.message_handler(regexp='Welcome to the restaurant of horns and hooves')
 def handle_message(message):
     restoran(message)
     pass
-
 
 def restoran(message):
     keyboard = types.InlineKeyboardMarkup(row_width=1)
@@ -110,7 +104,6 @@ def restoran(message):
     pass
 
 # end restoran
-
 def menu_start_buy(message, start_text):
     keyboard = types.InlineKeyboardMarkup(row_width=1)
     callback_button = types.InlineKeyboardButton(text=text(16), callback_data='buy_start')
@@ -121,8 +114,6 @@ def menu_start_buy(message, start_text):
         session.add(add9)
         session.commit()
     pass
-
-
 
 # call_back message
 @bot.callback_query_handler(func=lambda call: True)
@@ -161,10 +152,7 @@ def callback_inline(call):
             bot.send_message(call.message.chat.id, text=text(17))
             pass
         pass
-
     pass
-
-
 
 
 # message text
@@ -178,7 +166,6 @@ def text(i):
        i=i+26
    return line[i]
 
-
 # message buy no buy
 def handle_message_finish(message):
     markup = types.ReplyKeyboardMarkup(one_time_keyboard=True,resize_keyboard=True)
@@ -186,16 +173,14 @@ def handle_message_finish(message):
     bot.send_message(message.chat.id, text =text(18),reply_markup=markup)
     pass
 
-
 #drive
-
 def create(id_user, drive_service):
     stat_list = []
     text = ''
     for order in session.query(Buy):
         if order.id_user == id_user:
-            stat_list.append(' Menu:{} | Address:{}  |  Price:{}  |  Date:{} \n\n'.format(
-                 order.menu, order.adress_city, order.total, order.data_time_city))
+            stat_list.append(' Menu:{} | Address:{}    Date:{} \n\n'.format(
+                 order.menu, order.adress_city, order.data_time_city))
             # temp change to username
             text = ''.join(stat_list)
 
@@ -225,7 +210,7 @@ def drive_search_file(text, drive_service, chat_id):
         drive_create(text, filename, drive_service)
 
 
-
+		
 def drive_update(text, file_id, drive_service):
     upload_file = 'temp.txt'
     with open(upload_file, 'w+') as f:
@@ -249,6 +234,7 @@ def drive_create(text, filename, drive_service):
                                  media_body=media,
                                  fields='id').execute()
 
+								 
 def drive():
     query = session.query(Buy)
     last = query.filter(bool(Buy.buy_id)).count()
@@ -261,7 +247,6 @@ def drive():
     service = build('drive', 'v3', http=http)
     create(new, service)
     pass
-
 
 # calendar
 def calendar():
@@ -290,8 +275,6 @@ def calendar():
     }
     event = service.events().insert(calendarId='primary', body=event).execute()
     return json.dumps(event)
-
-
 
 # message
 @bot.message_handler(func=lambda message: message.text == message.text
@@ -381,7 +364,6 @@ def echoall(message):
             send_welcome(message)
             pass
         pass
-
     elif message.text != ('Calendar' and 'No-buy' and 'No' and 'Yes-buy' \
                                   and (bool(re.findall(r'(11|12|13|14)-\d{2}', message.text)))\
                                   and (bool(re.findall(r'\d{2}-\d{2}-(2017)', message.text))) \
@@ -408,7 +390,6 @@ def lang(a,message):
     send_welcome(message)
     pass
 
-	
 # tokin google
 scope = 'https://www.googleapis.com/auth/drive https://www.googleapis.com/auth/calendar'
 flow = oauth2client.client.flow_from_clientsecrets('client_secret.json',
@@ -482,6 +463,7 @@ def get_message():
     bot.process_new_updates([telebot.types.Update.de_json(request.stream.read().decode("utf-8"))])
     return "POST", 200
 
+	
 @server.route("/")
 def web_hook():
     bot.remove_webhook()

@@ -1,3 +1,3 @@
-web: python telegram_v5_1.py
+web: python telegram_bot.py
 clock: python clock.py
 
