@@ -24,6 +24,6 @@ SQLAlchemy==1.1.7
 telebot==0.0.3
 uritemplate==3.0.0
 urllib3==1.20
-Werkzeug==0.12.1
+Werkzeug==0.15.3
 SQLAlchemy-Utils==0.32.14
 APScheduler==3.0.0
