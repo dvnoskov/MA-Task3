@@ -2,7 +2,7 @@ alembic==0.9.1
 apiclient==1.0.3
 appdirs==1.4.3
 click==6.7
-Flask==0.12
+Flask==1.0
 google-api-python-client==1.6.2
 httplib2==0.10.3
 itsdangerous==0.24
