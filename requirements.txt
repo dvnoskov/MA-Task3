@@ -18,7 +18,7 @@ pyparsing==2.2.0
 pyTelegramBotAPI==2.3.1
 python-editor==1.0.3
 requests==2.7.0
-rsa==3.4.2
+rsa==4.7
 six==1.10.0
 SQLAlchemy==1.1.7
 telebot==0.0.3
